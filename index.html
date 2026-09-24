@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Zombie Slayer: Bıçak Ustası - 2D HTML5 Canvas, Web Audio API ve JavaScript ile geliştirilmiş zombi hayatta kalma ve rogue-lite aksiyon oyunu.">
+    <meta name="keywords" content="zombie slayer, zombie game, html5 game, canvas game, javascript game, roguelite, survival game, web audio api, arcade game, 2d action">
+    <meta name="author" content="devilteams-s">
+    <meta property="og:title" content="Zombie Slayer: Bıçak Ustası (Web Edition)">
+    <meta property="og:description" content="Zombi ordularına karşı hayatta kal! Modern HTML5 Canvas 2D Web Oyunu.">
+    <meta property="og:type" content="website">
+    <title>Zombie Slayer: Bıçak Ustası (Web Edition)</title>
+    <link rel="stylesheet" href="style.css?v=3">
+</head>
+<body>
+
+    <!-- TOP NAVIGATION & STATUS BAR -->
+    <header id="top-nav">
+        <div class="logo-area">
+            <span class="logo-icon">🧟</span>
+            <div>
+                <div class="logo-title">ZOMBIE SLAYER</div>
+                <div class="logo-sub">BIÇAK USTASI (RPi 5)</div>
+            </div>
+        </div>
+
+        <div class="nav-stats">
+            <div class="stat-badge">
+                <span>👤</span>
+                <span id="nav-username">Misafir</span>
+            </div>
+            <div class="stat-badge stat-gold">
+                <span id="nav-coins">0 💰</span>
+            </div>
+            <div class="stat-badge stat-score">
+                <span>🏆</span>
+                <span id="nav-highscore">0</span>
+            </div>
+        </div>
+
+        <div class="nav-buttons">
+            <button id="btn-lan" class="retro-btn" style="border-color: var(--neon-blue); color: var(--neon-blue); font-weight: bold;">📱 EV AĞI</button>
+            <button id="btn-shop" class="retro-btn btn-gold">🔫 MARKET</button>
+            <button id="btn-leaderboard" class="retro-btn">🏆 LİDERLİK</button>
+            <button id="btn-admin" class="retro-btn btn-purple" style="display: none;">⚡ YÖNETİCİ</button>
+            <button id="btn-audio" class="retro-btn">🔊 SES</button>
+            <button id="btn-login-modal" class="retro-btn btn-green">👤 GİRİŞ / KAYIT</button>
+        </div>
+    </header>
+
+    <!-- MAIN ARCADE CANVAS & FRAME -->
+    <main id="game-frame">
+        <!-- UTILITY CONTROLS BAR (Music, CRT, Lighting, Fullscreen) -->
+        <div class="utility-bar">
+            <div class="utility-group">
+                <button id="btn-toggle-bgm" class="retro-btn btn-purple" style="font-size: 8px; padding: 5px 8px;">
+                    <span class="eq-bars"><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span></span>
+                    <span id="bgm-label">🎵 MÜZİK: ÇAL</span>
+                </button>
+                <button id="btn-toggle-stick" class="retro-btn" style="font-size: 8px; padding: 5px 8px;">🕹️ JOYSTICK: AÇIK</button>
+                <button id="btn-toggle-crt" class="retro-btn" style="font-size: 8px; padding: 5px 8px;">📺 CRT: AÇIK</button>
+                <button id="btn-toggle-light" class="retro-btn" style="font-size: 8px; padding: 5px 8px;">💡 IŞIK: AÇIK</button>
+            </div>
+            <div class="utility-group">
+                <button id="btn-fullscreen" class="retro-btn btn-cyan" style="font-size: 8px; padding: 5px 8px;">⛶ TAM EKRAN</button>
+            </div>
+        </div>
+
+        <div class="canvas-wrapper" id="canvas-wrapper">
+            <canvas id="gameCanvas"></canvas>
+            <div class="crt-overlay"></div>
+
+            <!-- ON-SCREEN VIRTUAL JOYSTICK & DASH OVERLAY -->
+            <div id="mobile-touch-overlay" class="mobile-touch-overlay">
+                <div id="touch-stick-zone" class="touch-stick-zone">
+                    <div id="touch-stick-base" class="touch-stick-base">
+                        <div id="touch-stick-knob" class="touch-stick-knob"></div>
+                    </div>
+                    <div class="touch-label">🕹️ HAREKET</div>
+                </div>
+                <button id="btn-touch-dash" class="touch-btn-dash">⚡ TAKLA</button>
+            </div>
+        </div>
+
+        <!-- WEAPONS SELECTION DOCK -->
+        <div id="weapon-dock">
+            <div class="dock-title">
+                <span>⚡ SİLAHLAR</span>
+                <span class="dock-title-sub">[1-4 / Q / TEKERLEK]</span>
+            </div>
+
+            <div class="dock-slots">
+                <!-- Slot 1: Bıçak -->
+                <div class="weapon-slot active" data-weapon="knife" id="slot-knife">
+                    <div class="slot-header">
+                        <span class="slot-key">[1]</span>
+                        <span>Sınırsız</span>
+                    </div>
+                    <div class="slot-icon-area">🗡️</div>
+                    <div class="slot-name">BIÇAK</div>
+                    <div class="slot-ammo-container">
+                        <div class="slot-ammo">SONSUZ</div>
+                        <div class="ammo-bar-bg"><div class="ammo-bar-fill" style="width: 100%;"></div></div>
+                    </div>
+                </div>
+
+                <!-- Slot 2: Tabanca -->
+                <div class="weapon-slot" data-weapon="pistol" id="slot-pistol">
+                    <div class="slot-header">
+                        <span class="slot-key">[2]</span>
+                        <span>9mm</span>
+                    </div>
+                    <div class="slot-icon-area">🔫</div>
+                    <div class="slot-name">TABANCA</div>
+                    <div class="slot-ammo-container">
+                        <div class="slot-ammo">60 MERMİ</div>
+                        <div class="ammo-bar-bg"><div class="ammo-bar-fill" id="bar-pistol" style="width: 100%;"></div></div>
+                    </div>
+                </div>
+
+                <!-- Slot 3: Av Tüfeği -->
+                <div class="weapon-slot locked" data-weapon="shotgun" id="slot-shotgun">
+                    <div class="slot-header">
+                        <span class="slot-key">[3]</span>
+                        <span>12 Gauge</span>
+                    </div>
+                    <div class="slot-icon-area">💥</div>
+                    <div class="slot-name">AV TÜFEĞİ</div>
+                    <div class="slot-ammo-container">
+                        <div class="slot-ammo">KİLİTLİ</div>
+                        <div class="ammo-bar-bg"><div class="ammo-bar-fill empty" id="bar-shotgun" style="width: 0%;"></div></div>
+                    </div>
+                </div>
+
+                <!-- Slot 4: Taramalı -->
+                <div class="weapon-slot locked" data-weapon="machinegun" id="slot-machinegun">
+                    <div class="slot-header">
+                        <span class="slot-key">[4]</span>
+                        <span>7.62mm</span>
+                    </div>
+                    <div class="slot-icon-area">⚡</div>
+                    <div class="slot-name">TARAMALI</div>
+                    <div class="slot-ammo-container">
+                        <div class="slot-ammo">KİLİTLİ</div>
+                        <div class="ammo-bar-bg"><div class="ammo-bar-fill empty" id="bar-machinegun" style="width: 0%;"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dash Roll Meter -->
+            <div class="dash-meter">
+                <span class="dash-label">[SPACE] TAKLA</span>
+                <div class="dash-bar-bg">
+                    <div class="dash-bar-fill" id="dash-bar"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- LAN SHARE MODAL (RPi 5 Dağıtım) -->
+    <div class="modal-overlay" id="lan-modal">
+        <div class="modal-window" style="width: 520px; text-align: center;">
+            <div class="modal-header">
+                <div class="modal-title">📱 EV AĞI PAYLAŞIMI (RPi 5)</div>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background: rgba(231, 76, 60, 0.15); border: 2px solid #e74c3c; border-radius: 4px; padding: 10px; margin-bottom: 12px; font-size: 8px; color: #ffb8b8; line-height: 1.6; text-align: left;">
+                    ⚠️ <b>BAĞLANTI İÇİN 2 KRİTİK KURAL:</b><br>
+                    1. Telefonunuz <b>evdeki Wi-Fi ağına</b> bağlı olmalı (mobil veri/hücresel veri çalışmaz).<br>
+                    2. Tarayıcıya yazarken başına mutlaka <b>http://</b> yazın! (Örn: <code>http://192.168.0.131:8000</code>). <code>https://</code> yazarsanız telefon bağlantıyı reddeder!
+                </div>
+
+                <div style="background: var(--bg-dark); border: 2px solid #2d3d56; border-radius: 4px; padding: 14px; margin-bottom: 14px;">
+                    <div style="font-size: 8px; color: var(--text-muted); margin-bottom: 6px;">EV İÇİ BAĞLANTI ADRESİ:</div>
+                    <div id="lan-url-display" style="font-size: 13px; color: var(--neon-blue); font-weight: bold; letter-spacing: 1px; word-break: break-all; margin-bottom: 10px;">
+                        http://192.168.0.131:8000
+                    </div>
+                    <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                        <button id="btn-copy-lan" class="retro-btn btn-gold">📋 ADRESİ KOPYALA</button>
+                    </div>
+                    <span id="copy-lan-status" style="display: block; font-size: 8px; color: var(--neon-green); margin-top: 6px;"></span>
+                </div>
+
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 10px;">
+                    <div style="font-size: 8px; color: var(--text-muted);">📱 TELEFON KAMERASIYLA KODU OKUTUN:</div>
+                    <div id="lan-qr-container" style="background: #fff; padding: 8px; border-radius: 6px; display: inline-block;">
+                        <img id="lan-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=http://192.168.0.131:8000" alt="QR Kod" style="width: 140px; height: 140px; display: block;" onerror="this.style.display='none'">
+                    </div>
+                    <span style="font-size: 8px; color: var(--text-muted);">Kamera otomatik olarak http:// adresiyle açacaktır.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUTH MODAL (LOGIN / REGISTER) -->
+    <div class="modal-overlay" id="auth-modal">
+        <div class="modal-window" style="width: 420px;">
+            <div class="modal-header">
+                <div class="modal-title">👤 HESAP GİRİŞİ / KAYIT</div>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="tab-row">
+                    <button class="tab-btn active" id="tab-btn-login">GİRİŞ YAP</button>
+                    <button class="tab-btn" id="tab-btn-register">KAYIT OL</button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="form-login">
+                    <div class="form-group">
+                        <label>KULLANICI ADI:</label>
+                        <input type="text" id="login-username" class="form-input" required autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label>ŞİFRE:</label>
+                        <input type="password" id="login-password" class="form-input" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="retro-btn btn-green" style="width: 100%; margin-top: 10px;">GİRİŞ YAP</button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="form-register" style="display: none;">
+                    <div class="form-group">
+                        <label>KULLANICI ADI (En az 3 harf):</label>
+                        <input type="text" id="reg-username" class="form-input" required autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label>ŞİFRE (En az 3 harf):</label>
+                        <input type="password" id="reg-password" class="form-input" required autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="retro-btn btn-gold" style="width: 100%; margin-top: 10px;">KAYIT OL</button>
+                </form>
+
+                <div id="auth-message" style="margin-top: 14px; text-align: center; font-size: 9px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SHOP / MARKET MODAL -->
+    <div class="modal-overlay" id="shop-modal">
+        <div class="modal-window">
+            <div class="modal-header">
+                <div class="modal-title">🏪 BİLEME TAŞI & SİLAH DEPOSU (MARKET)</div>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Shop Tabs -->
+                <div class="tab-row">
+                    <button class="tab-btn shop-tab-btn active" data-tab="weapons">🔫 SİLAH & CEPHANE</button>
+                    <button class="tab-btn shop-tab-btn" data-tab="combat">⚔️ SAVAŞ</button>
+                    <button class="tab-btn shop-tab-btn" data-tab="survival">🛡️ HAYATTA KALMA</button>
+                    <button class="tab-btn shop-tab-btn" id="shop-tab-admin" data-tab="admin" style="display: none;">⚡ YÖNETİCİ</button>
+                </div>
+
+                <div id="shop-message" style="font-size: 9px; margin-bottom: 8px; text-align: center;"></div>
+                <div class="shop-grid" id="shop-items-container">
+                    <!-- Loaded dynamically via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEADERBOARD MODAL -->
+    <div class="modal-overlay" id="leaderboard-modal">
+        <div class="modal-window" style="width: 580px;">
+            <div class="modal-header">
+                <div class="modal-title">🏆 KAHRAMANLAR LİDERLİK TABLOSU</div>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <table class="lb-table">
+                    <thead>
+                        <tr>
+                            <th>SIRA</th>
+                            <th>OYUNCU</th>
+                            <th>SKOR</th>
+                            <th>DALGA</th>
+                            <th>LEŞ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lb-body">
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL MODAL -->
+    <div class="modal-overlay" id="admin-modal">
+        <div class="modal-window" style="width: 460px;">
+            <div class="modal-header">
+                <div class="modal-title">⚡ YÖNETİCİ KOMUT PANELİ</div>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-admin-coins">
+                    <div class="form-group">
+                        <label>HEDEF KULLANICI:</label>
+                        <input type="text" id="admin-target-user" class="form-input" value="admin" required>
+                    </div>
+                    <div class="form-group">
+                        <label>EKLENECEK PARA MİKTARI:</label>
+                        <input type="number" id="admin-coins-amount" class="form-input" value="1000" min="1" required>
+                    </div>
+                    <button type="submit" class="retro-btn btn-gold" style="width: 100%; margin-top: 8px;">💰 PARA EKLE</button>
+                </form>
+                <div id="admin-msg" style="margin-top: 10px; font-size: 9px; text-align: center;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEVEL UP UPGRADE SELECTION MODAL (SURVIVAL MODE ONLY) -->
+    <div class="modal-overlay" id="upgrade-cards-modal">
+        <div class="modal-window" style="width: 660px;">
+            <div class="modal-header">
+                <div class="modal-title">⭐ SEVİYE ATLADIN! BİR GELİŞTİRME SEÇ:</div>
+            </div>
+            <div class="modal-body">
+                <div class="upgrade-cards-container" id="upgrade-choices">
+                    <!-- Populated dynamically with 3 cards -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME OVER MODAL -->
+    <div class="modal-overlay" id="game-over-modal">
+        <div class="modal-window" style="width: 440px; text-align: center;">
+            <div class="modal-header" style="justify-content: center;">
+                <div class="modal-title" style="color: var(--neon-red); font-size: 14px;">💀 ÖLDÜNÜZ!</div>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 10px; color: var(--text-muted); margin-bottom: 12px;">ZOMBİ ORDUSUNA YENİK DÜŞTÜNÜZ</p>
+                <div style="background: var(--bg-dark); padding: 14px; border: 2px solid #2d3d56; border-radius: 4px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+                    <div>🏆 SKOR: <span id="go-score" style="color: var(--neon-blue);">0</span></div>
+                    <div>🌊 ULAŞILAN DALGA: <span id="go-wave" style="color: var(--neon-yellow);">1</span></div>
+                    <div>🗡️ ZOMBİ LEŞİ: <span id="go-kills" style="color: var(--neon-red);">0</span></div>
+                    <div>💰 KAZANILAN PARA: <span id="go-coins" style="color: var(--neon-green);">+0</span></div>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button id="btn-go-restart" class="retro-btn btn-green">TEKRAR OYNA</button>
+                    <button id="btn-go-menu" class="retro-btn">ANA MENÜ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GITHUB PROFILE BADGE (SAĞ ALT) -->
+    <a href="https://github.com/devilteams-s" target="_blank" rel="noopener noreferrer" id="author-badge" title="Geliştirici GitHub Profili">
+        <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+        </svg>
+        <span>devilteams-s</span>
+    </a>
+
+    <!-- SCRIPTS -->
+    <script src="audio.js?v=3"></script>
+    <script src="sprites.js?v=3"></script>
+    <script src="game.js?v=3"></script>
+    <script src="ui.js?v=3"></script>
+</body>
+</html>
